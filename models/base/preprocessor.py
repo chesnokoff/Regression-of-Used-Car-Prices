@@ -15,6 +15,14 @@ class CarColumnProcessor(BaseEstimator, TransformerMixin):
 
         self.num_medians_ = X[self.num_cols_].median(numeric_only=True)
         self.feature_names_ = self.num_cols_ + self.cat_cols_
+
+        self.freq_maps_ = {}
+        for col in ["brand", "model", "brand_model", "ext_col", "int_col", "transmission", "fuel_type"]:
+            if col in X.columns:
+                s = X[col].astype("string").fillna("MISSING")
+                self.freq_maps_[col] = s.value_counts().to_dict()
+            else:
+                self.freq_maps_[col] = {}
         return self
 
     def _add_features(self, X: pd.DataFrame):
@@ -32,12 +40,13 @@ class CarColumnProcessor(BaseEstimator, TransformerMixin):
         X["same_color"] = (X["ext_col"].astype("string").fillna("MISSING") == X["int_col"].astype("string").fillna("MISSING")).astype(int)
 
         for col in ["brand", "model", "brand_model", "ext_col", "int_col", "transmission", "fuel_type"]:
-            if col in X.columns:
-                s = X[col].astype("string").fillna("MISSING")
-                vc = s.value_counts()
-                X[f"{col}_freq"] = s.map(vc).astype(float)
-            else:
+            s = X.get(col)
+            if s is None:
                 X[f"{col}_freq"] = 0.0
+            else:
+                s = s.astype("string").fillna("MISSING")
+                mp = self.freq_maps_.get(col, {})
+                X[f"{col}_freq"] = s.map(mp).fillna(0).astype(float)
 
         return X
 
