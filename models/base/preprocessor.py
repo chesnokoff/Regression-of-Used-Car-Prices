@@ -4,13 +4,9 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 class CarColumnProcessor(BaseEstimator, TransformerMixin):
-    def __init__(self, drop_cols=("id",)):
-        self.drop_cols = tuple(drop_cols)
-
     def fit(self, X, y=None):
         X = X.copy()
-        self.drop_cols_ = [c for c in self.drop_cols if c in X.columns]
-        X = X.drop(columns=self.drop_cols_, errors="ignore")
+        X = X.drop(columns=['id'], errors="ignore")
 
         X = self._add_features(X)
 
@@ -47,13 +43,9 @@ class CarColumnProcessor(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         X = X.copy()
-        X = X.drop(columns=self.drop_cols, errors="ignore")
+        X = X.drop(columns=['id'], errors="ignore")
 
         X = self._add_features(X)
-
-        for c in self.feature_names_:
-            if c not in X.columns:
-                X[c] = np.nan
 
         if self.num_cols_:
             X[self.num_cols_] = X[self.num_cols_].apply(pd.to_numeric, errors="coerce")
